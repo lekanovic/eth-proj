@@ -1,5 +1,4 @@
-
-
+import "sorter.sol";
 
 contract Lotto{
     address owner;
@@ -8,20 +7,18 @@ contract Lotto{
     uint largest_number = 36;
     uint total_number = 7;
 
-    struct Better{
-        uint number_of_bets;
-         uint[][7] lotto_numbers;
-    }
+    uint[] temp;
     
-    mapping (address => Better) private balances;
+    mapping (bytes32 => address) private balances;
     
     event print(uint);
     event print_addr(address);
     event print_str(string);
+    event print_b(bytes32);
 
     function Lotto()
     {
-        //bytes32 myid = oraclize_query("URL", "https://www.random.org/integers/?num=7&min=1&max=32&col=1&base=10&format=plain&rnd=new");
+        //bytes32 myid = oraclize_query("URL", "https://wwww.random.org/integers/?num=7&min=1&max=32&col=1&base=10&format=plain&rnd=new");
         
         //http://docs.ethereum-alarm-clock.com/en/latest/scheduling.html#call-data
         //bytes4 sig = bytes4(sha3("pickWinner()"));
@@ -39,24 +36,21 @@ contract Lotto{
         print(msg.value);
         print_addr(msg.sender);
         print(now);
-        Better b = balances[msg.sender];
-  
-        b.lotto_numbers[b.number_of_bets] = num;
-        b.number_of_bets = b.number_of_bets + 1;
-        print(b.number_of_bets);
-        balances[msg.sender] = b;
+        print(now + 4 weeks);
+        
+        temp = num;
+        Sorter s = Sorter(0xdf315f7485c3a86eb692487588735f224482abe3);
+        s.set(temp);
+        s.sort();
 
-        
-    }
-    function print_data()
-    {
-        Better b = balances[msg.sender];
-        
-        for (uint j = 0;j < b.number_of_bets;j++){
-            for(uint i = 0;i < b.lotto_numbers[j].length; i++){
-                print(b.lotto_numbers[j][i]);
-            }
+        for (uint i=0;i<temp.length;i++){
+            print(s.data(i));
+            temp[i] = s.data(i);
         }
+
+        bytes32 hash = sha3(temp);
+        balances[hash] = msg.sender;
+
     }
     modifier checkData(uint value, uint[] numbers){
         if (value != min_bet){
