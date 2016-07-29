@@ -25,9 +25,8 @@ contract Lotto is usingOraclize{
         owner = msg.sender;
     }
     function configure(uint _m, uint _s, uint _l, uint _t, uint _d)
+    ownerOnly
     {
-        if (msg.sender != owner) throw;
-
         min_bet = _m;
         smallest_number = _s;
         largest_number = _l;
@@ -65,7 +64,7 @@ contract Lotto is usingOraclize{
                 throw;
             }
         } else { //No winner
-
+            start_round();
         }
         
     }
@@ -94,6 +93,10 @@ contract Lotto is usingOraclize{
         bytes32 hash = sha3(temp);
         balances[hash] = msg.sender;
 
+    }
+    modifier ownerOnly(){
+        if (msg.sender != owner)
+            throw;
     }
     modifier checkData(uint value, uint[] numbers){
         if (value != min_bet){
