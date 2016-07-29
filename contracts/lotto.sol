@@ -1,14 +1,17 @@
 import "sorter.sol";
+import "oraclizeAPI.sol";
+import "strings.sol";
 
-contract Lotto{
+contract Lotto is usingOraclize{
+    using strings for *;
     address owner;
-    uint min_bet = 100;
+    uint min_bet = 3000000000000000000;//Wei ~ 0.00150BTC ~ 1USD
     uint smallest_number = 1;
     uint largest_number = 36;
     uint total_number = 7;
-
+    uint delay = 1;//1209600 //2weeks
     uint[] temp;
-    
+    uint[] lotto_number;  
     mapping (bytes32 => address) private balances;
     
     event print(uint);
@@ -18,17 +21,37 @@ contract Lotto{
 
     function Lotto()
     {
-        //bytes32 myid = oraclize_query("URL", "https://wwww.random.org/integers/?num=7&min=1&max=32&col=1&base=10&format=plain&rnd=new");
+        owner = msg.sender;
+    }
+    function start_round()
+    {
+        oraclize_query(delay, "URL", "https://www.random.org/integers/?num=7&min=1&max=32&col=1&base=10&format=plain&rnd=new");
+    }
+    function __callback(bytes32 myid, string result) {
+        print_str("__callback");
         
-        //http://docs.ethereum-alarm-clock.com/en/latest/scheduling.html#call-data
-        //bytes4 sig = bytes4(sha3("pickWinner()"));
-        //uint targetBlock = block.number + 5760;
-        //bytes4 scheduleCallSig = bytes4(sha3("scheduleCall(bytes4,uint256)"));
-        //scheduler.call(scheduleCallSig, sig, targetBlock)
+        if (msg.sender != oraclize_cbAddress()) throw;
+
+        var s = result.toSlice();
+        var delim = " ".toSlice();
+        var len = s.count(delim) + 1;
+        for(uint i = 0; i < len; i++) {
+            lotto_number.push(parseInt(s.split(delim).toString()));
+        }
+        
+        Sorter sort = Sorter(0xe0dccf67776caf8801dd1ac3ce5969111d74c6e0);
+        sort.set(lotto_number);
+        sort.sort();
+
+        for (uint j=0;j<lotto_number.length;j++){
+            lotto_number[j] = sort.data(j);
+        }
+        bytes32 hash = sha3(lotto_number);
+        
     }
     function pickWinner()
     {
-        
+        print_str("pickWinner");
     }
     function bet(uint[] num)
     checkData(msg.value, num)
@@ -39,7 +62,7 @@ contract Lotto{
         print(now + 4 weeks);
         
         temp = num;
-        Sorter s = Sorter(0xdf315f7485c3a86eb692487588735f224482abe3);
+        Sorter s = Sorter(0xe0dccf67776caf8801dd1ac3ce5969111d74c6e0);
         s.set(temp);
         s.sort();
 
