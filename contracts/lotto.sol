@@ -24,6 +24,16 @@ contract Lotto is usingOraclize{
     {
         owner = msg.sender;
     }
+    function configure(uint _m, uint _s, uint _l, uint _t, uint _d)
+    {
+        if (msg.sender != owner) throw;
+
+        min_bet = _m;
+        smallest_number = _s;
+        largest_number = _l;
+        total_number = _t;
+        delay = _d;
+    }
     function start_round()
     {
         oraclize_query(delay, "URL", "https://www.random.org/integers/?num=7&min=1&max=32&col=1&base=10&format=plain&rnd=new");
