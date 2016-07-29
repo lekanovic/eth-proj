@@ -18,6 +18,7 @@ contract Lotto is usingOraclize{
     event print_addr(address);
     event print_str(string);
     event print_b(bytes32);
+    event present_winner(address, uint);
 
     function Lotto()
     {
@@ -47,6 +48,15 @@ contract Lotto is usingOraclize{
             lotto_number[j] = sort.data(j);
         }
         bytes32 hash = sha3(lotto_number);
+
+        if ( balances[hash] != 0){
+            present_winner(balances[hash], this.balance);
+            if (!balances[hash].send(this.balance)){
+                throw;
+            }
+        } else { //No winner
+
+        }
         
     }
     function pickWinner()
