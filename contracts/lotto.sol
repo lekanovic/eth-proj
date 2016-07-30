@@ -5,7 +5,7 @@ import "strings.sol";
 contract Lotto is usingOraclize{
     using strings for *;
     address owner;
-    uint min_bet = 3000000000000000000;//Wei ~ 0.00150BTC ~ 1USD
+    uint min_bet = 100;//finney ~ 0.00005BTC ~ 1USD
     uint smallest_number = 1;
     uint largest_number = 36;
     uint total_number = 7;
@@ -13,6 +13,7 @@ contract Lotto is usingOraclize{
     uint[] temp;
     uint[] lotto_number;  
     mapping (bytes32 => address) private balances;
+    Sorter sort;
     
     event print(uint);
     event print_addr(address);
@@ -23,6 +24,7 @@ contract Lotto is usingOraclize{
     function Lotto()
     {
         owner = msg.sender;
+        sort = Sorter(0xe0dccf67776caf8801dd1ac3ce5969111d74c6e0);
     }
     function configure(uint _m, uint _s, uint _l, uint _t, uint _d)
     ownerOnly
@@ -37,9 +39,9 @@ contract Lotto is usingOraclize{
     {
         oraclize_query(delay, "URL", "https://www.random.org/integers/?num=7&min=1&max=32&col=1&base=10&format=plain&rnd=new");
     }
-    function __callback(bytes32 myid, string result) {
+    function __callback(bytes32 myid, string result)
+    {
         print_str("__callback");
-        
         if (msg.sender != oraclize_cbAddress()) throw;
 
         var s = result.toSlice();
@@ -48,8 +50,7 @@ contract Lotto is usingOraclize{
         for(uint i = 0; i < len; i++) {
             lotto_number.push(parseInt(s.split(delim).toString()));
         }
-        
-        Sorter sort = Sorter(0xe0dccf67776caf8801dd1ac3ce5969111d74c6e0);
+
         sort.set(lotto_number);
         sort.sort();
 
@@ -64,9 +65,10 @@ contract Lotto is usingOraclize{
                 throw;
             }
         } else { //No winner
+            print_str("No winner");
+            print_addr(balances[hash]);
             start_round();
         }
-        
     }
     function pickWinner()
     {
@@ -81,18 +83,17 @@ contract Lotto is usingOraclize{
         print(now + 4 weeks);
         
         temp = num;
-        Sorter s = Sorter(0xe0dccf67776caf8801dd1ac3ce5969111d74c6e0);
-        s.set(temp);
-        s.sort();
+
+        sort.set(temp);
+        sort.sort();
 
         for (uint i=0;i<temp.length;i++){
-            print(s.data(i));
-            temp[i] = s.data(i);
+            print(sort.data(i));
+            temp[i] = sort.data(i);
         }
 
         bytes32 hash = sha3(temp);
         balances[hash] = msg.sender;
-
     }
     modifier ownerOnly(){
         if (msg.sender != owner)
